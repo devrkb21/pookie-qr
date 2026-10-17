@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#fff1f5" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Love QR" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>Love QR Studio</title>
+  <meta name="description" content="A little QR studio, made just for you." />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+</head>
+<body>
+  <canvas id="petals" aria-hidden="true"></canvas>
+
+  <!-- ============ Welcome letter ============ -->
+  <div class="welcome" id="welcome" hidden>
+    <div class="envelope" id="envelope">
+      <div class="env-back"></div>
+      <div class="letter">
+        <p class="letter-hi"><span data-i18n="w_hi">Hi</span> <span class="her-name"></span>,</p>
+        <p class="letter-body" id="letterBody"></p>
+        <p class="letter-from" id="letterFrom"></p>
+        <button class="btn primary" id="openGift" data-i18n="w_open">Open your gift ♥</button>
+      </div>
+      <div class="env-front"></div>
+      <div class="env-flap"></div>
+      <button class="seal" id="seal" aria-label="Open the letter">♥</button>
+    </div>
+  </div>
+
+  <div class="app">
+    <!-- ============ Top bar ============ -->
+    <nav class="topbar">
+      <div class="brand"><span class="brand-mark">♥</span><span data-i18n="brand">Love QR Studio</span></div>
+      <div class="top-actions">
+        <div class="seg small" id="langSeg" role="group" aria-label="Language">
+          <button data-lang="en">EN</button><button data-lang="bn">বাং</button>
+        </div>
+        <button class="icon-btn" id="themeBtn" aria-label="Toggle dark mode">🌙</button>
+        <button class="icon-btn" id="replayBtn" data-i18n-title="replay" aria-label="Read the note again">💌</button>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <h1 class="script"><span data-i18n="for">For</span> <span class="her-name"></span> <span class="beat">♥</span></h1>
+      <p class="sub" data-i18n="subtitle">a little QR studio, made just for you</p>
+      <div class="seg mode" id="modeSeg" role="tablist">
+        <button data-mode="create" class="on">✨ <span data-i18n="create">Create</span></button>
+        <button data-mode="scan">📷 <span data-i18n="scan">Scan</span></button>
+        <span class="seg-ink"></span>
+      </div>
+    </header>
+
+    <!-- ============ CREATE ============ -->
+    <main class="grid" id="createView">
+      <section class="card controls">
+        <div class="tabs" id="tabs" role="tablist">
+          <button data-tab="content" class="on"><i>✎</i><span data-i18n="tabContent">Content</span></button>
+          <button data-tab="design"><i>🎨</i><span data-i18n="tabDesign">Design</span></button>
+          <button data-tab="frame"><i>🖼</i><span data-i18n="tabFrame">Frame</span></button>
+          <button data-tab="badge"><i>💗</i><span data-i18n="tabBadge">Badge</span></button>
+        </div>
+
+        <!-- Content -->
+        <div class="panel on" data-panel="content">
+          <div class="types" id="types"></div>
+          <div class="form" id="form"></div>
+        </div>
+
+        <!-- Design -->
+        <div class="panel" data-panel="design">
+          <div class="field-head"><h3 data-i18n="d_mood">Mood</h3><button class="link-btn" id="surprise" data-i18n="surprise">✨ Surprise me</button></div>
+          <div class="moods" id="moods"></div>
+
+          <h3 data-i18n="d_shape">QR shape</h3>
+          <div class="seg" id="shapeSeg">
+            <button data-v="square" data-i18n="shape_square">Square</button>
+            <button data-v="circle" data-i18n="shape_circle">Circle</button>
+          </div>
+
+          <h3 data-i18n="d_dots">Dot style</h3>
+          <div class="styles" id="dotStyles"></div>
+          <h3 data-i18n="d_eyes">Eye frame</h3>
+          <div class="styles" id="eyeStyles"></div>
+          <h3 data-i18n="d_eyeDots">Eye center</h3>
+          <div class="styles" id="eyeDotStyles"></div>
+
+          <h3 data-i18n="d_colors">Colors</h3>
+          <div class="swatches">
+            <label class="swatch"><input type="color" id="c1" /><span data-i18n="c_dots">Dots</span></label>
+            <label class="swatch"><input type="color" id="c2" /><span data-i18n="c_blend">Blend</span></label>
+            <label class="swatch"><input type="color" id="eye" /><span data-i18n="c_eyes">Eyes</span></label>
+            <label class="swatch"><input type="color" id="bg" /><span data-i18n="c_bg">Background</span></label>
+          </div>
+
+          <h3 data-i18n="d_gradient">Gradient</h3>
+          <div class="seg" id="gradSeg">
+            <button data-v="none" data-i18n="g_none">Solid</button>
+            <button data-v="linear" data-i18n="g_linear">Linear</button>
+            <button data-v="radial" data-i18n="g_radial">Radial</button>
+          </div>
+          <label class="range" id="angleWrap"><span data-i18n="d_angle">Angle</span><input type="range" id="angle" min="0" max="360" step="5" /><output id="angleOut"></output></label>
+          <label class="check"><input type="checkbox" id="transparent" /><span data-i18n="d_transparent">Transparent background</span></label>
+        </div>
+
+        <!-- Frame -->
+        <div class="panel" data-panel="frame">
+          <h3 data-i18n="fr_style">Frame style</h3>
+          <div class="frames" id="frames"></div>
+          <div class="row">
+            <label class="fld"><span data-i18n="f_title">Title</span><input id="title" type="text" maxlength="40" data-i18n-ph="ph_title" /></label>
+            <label class="fld"><span data-i18n="f_caption">Caption</span><input id="caption" type="text" maxlength="40" data-i18n-ph="ph_caption" /></label>
+          </div>
+          <h3 data-i18n="f_font">Caption font</h3>
+          <div class="seg wrap" id="fontSeg">
+            <button data-v="script" class="f-script" data-i18n="font_script">Script</button>
+            <button data-v="serif" class="f-serif" data-i18n="font_serif">Elegant</button>
+            <button data-v="clean" class="f-clean" data-i18n="font_clean">Clean</button>
+            <button data-v="bangla" class="f-bangla" data-i18n="font_bangla">বাংলা</button>
+          </div>
+        </div>
+
+        <!-- Badge -->
+        <div class="panel" data-panel="badge">
+          <h3 data-i18n="b_choose">Center badge</h3>
+          <div class="badges" id="badges"></div>
+          <label class="upload-tile" id="uploadTile">
+            <input type="file" id="badgeFile" accept="image/*" />
+            <span class="up-preview" id="upPreview"></span>
+            <span data-i18n="b_upload">📷 Upload photo</span>
+          </label>
+          <label class="range"><span data-i18n="b_size">Badge size</span><input type="range" id="badgeSize" min="0.15" max="0.4" step="0.01" /><output id="badgeSizeOut"></output></label>
+          <label class="check"><input type="checkbox" id="roundPhoto" /><span data-i18n="b_round">Round photo</span></label>
+        </div>
+      </section>
+
+      <!-- Preview -->
+      <aside class="card preview" id="previewCard">
+        <div class="stage" id="stage">
+          <canvas id="view" aria-label="QR preview"></canvas>
+        </div>
+        <div class="status">
+          <span class="chip" id="checkChip"><i></i><span id="checkText"></span></span>
+          <span class="count" id="count"></span>
+        </div>
+
+        <button class="btn primary big desk-only" id="dlPng"><span class="shine"></span>⬇ <span data-i18n="dl_png">Download PNG</span></button>
+        <div class="quality">
+          <span data-i18n="quality">Quality</span>
+          <div class="seg small" id="qualitySeg">
+            <button data-v="1" data-i18n="q1">Normal</button>
+            <button data-v="2" data-i18n="q2">HD</button>
+            <button data-v="4" data-i18n="q4">Ultra HD</button>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn ghost" id="dlJpg">JPG</button>
+          <button class="btn ghost" id="dlSvg">SVG</button>
+          <button class="btn ghost" id="copyBtn">📋 <span data-i18n="copy">Copy</span></button>
+          <button class="btn ghost" id="shareBtn">↗ <span data-i18n="share">Share</span></button>
+        </div>
+
+        <div class="history" id="historyBox" hidden>
+          <div class="field-head"><h3 data-i18n="recent">Recently made</h3><button class="link-btn" id="clearHist" data-i18n="clear">Clear</button></div>
+          <div class="hgrid" id="hgrid"></div>
+        </div>
+      </aside>
+      <div class="history-slot" id="historySlot"></div>
+    </main>
+
+    <!-- ============ SCAN ============ -->
+    <main class="scan-view" id="scanView" hidden>
+      <section class="card scanner">
+        <h2 data-i18n="sc_title">Scan any QR code</h2>
+        <p class="muted" data-i18n="sc_sub">Use the camera, or drop / paste a picture of a QR code.</p>
+        <div class="viewfinder" id="viewfinder">
+          <video id="video" playsinline muted></video>
+          <div class="vf-corners"><i></i><i></i><i></i><i></i></div>
+          <div class="vf-line"></div>
+          <div class="drop" id="drop"><span class="drop-icon">🖼</span><span data-i18n="sc_drop">Drop an image here, or press Ctrl+V to paste</span></div>
+        </div>
+        <div class="scan-btns">
+          <button class="btn primary" id="camBtn" data-i18n="sc_start">📷 Start camera</button>
+          <label class="btn ghost file-btn"><input type="file" id="scanFile" accept="image/*" /><span data-i18n="sc_upload">🖼 Choose a picture</span></label>
+        </div>
+        <div class="result" id="result" hidden>
+          <div class="result-head">💖 <span data-i18n="sc_result">Found it!</span></div>
+          <pre id="resultText"></pre>
+          <div class="result-btns">
+            <a class="btn primary" id="resOpen" target="_blank" rel="noopener" data-i18n="sc_open">Open</a>
+            <button class="btn ghost" id="resCopy" data-i18n="sc_copy">Copy</button>
+            <button class="btn ghost" id="resEdit" data-i18n="sc_edit">Edit in studio</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer><span data-i18n="footer">made with all my love, just for you</span> <span class="beat">♥</span></footer>
+  </div>
+
+  <!-- phone only: floating live preview + bottom action bar -->
+  <button class="pip" id="pip" aria-label="Show preview"><canvas id="pipCanvas"></canvas></button>
+  <div class="mobilebar" id="mobilebar">
+    <button class="btn ghost" id="mDl">⬇ <span data-i18n="m_download">Download</span></button>
+    <button class="btn primary" id="mShare"><span class="shine"></span>💾 <span data-i18n="m_save">Save to phone</span></button>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
