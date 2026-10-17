@@ -94,7 +94,7 @@ export function initScanner({ toast, onEdit, celebrate }) {
     const open = $("#resOpen");
     open.hidden = !info.open;
     if (info.open) open.href = info.open;
-    if (info.lines) $("#resultText").textContent = info.lines.map(([k, v]) => `${k}: ${v}`).join("\n");
+    if (info.lines) $("#resultText").textContent = info.lines.map(([k, v]) => `${t(k)}: ${v}`).join("\n");
     $("#result").hidden = false;
     $("#result").scrollIntoView({ behavior: "smooth", block: "nearest" });
     celebrate($("#result"));

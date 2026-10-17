@@ -25,6 +25,7 @@ const en = {
   f_eventTitle: "Event title", ph_eventTitle: "Our anniversary dinner ♥", f_eventPlace: "Where",
   f_start: "Starts", f_end: "Ends", f_notes: "Notes",
   f_platform: "Platform", f_username: "Username",
+  ph_ssid: "Home Wi-Fi", ph_hi: "Hi! 👋", ph_username: "username",
 
   // design
   d_mood: "Mood", d_shape: "QR shape", shape_square: "Square", shape_circle: "Circle",
@@ -97,6 +98,7 @@ const bn = {
   f_eventTitle: "ইভেন্টের নাম", ph_eventTitle: "আমাদের অ্যানিভার্সারি ডিনার ♥", f_eventPlace: "কোথায়",
   f_start: "শুরু", f_end: "শেষ", f_notes: "নোট",
   f_platform: "প্ল্যাটফর্ম", f_username: "ইউজারনেম",
+  ph_ssid: "বাসার ওয়াই-ফাই", ph_hi: "হাই! 👋", ph_username: "ইউজারনেম",
 
   d_mood: "মুড", d_shape: "QR এর আকার", shape_square: "চারকোনা", shape_circle: "গোল",
   d_dots: "ডটের স্টাইল", d_eyes: "চোখের ফ্রেম", d_eyeDots: "চোখের মাঝখান",
@@ -145,6 +147,8 @@ let lang = CONFIG.defaultLang;
 export const getLang = () => lang;
 export const t = (key) => DICTS[lang][key] ?? en[key] ?? key;
 export const tc = (obj) => obj[lang] ?? obj.en; // pick from a CONFIG {en, bn} pair
+// numbers in Bangla digits when the app is in Bangla
+export const num = (n) => (lang === "bn" ? String(n).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[d]) : String(n));
 
 export function setLang(next) {
   lang = DICTS[next] ? next : "en";

@@ -19,7 +19,7 @@
   --stage: linear-gradient(145deg, #fff9fb, #ffeef4);
   --radius: 28px;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --sans: "Poppins", "Hind Siliguri", system-ui, sans-serif;
+  --sans: "Poppins", "Baloo Da 2", system-ui, sans-serif;
   color-scheme: light;
 }
 :root[data-theme="dark"] {
@@ -43,7 +43,11 @@
   --stage: linear-gradient(145deg, #2a1222, #1e0d19);
   color-scheme: dark;
 }
-:lang(bn) { --sans: "Hind Siliguri", "Poppins", system-ui, sans-serif; }
+:lang(bn) { --sans: "Baloo Da 2", "Poppins", system-ui, sans-serif; }
+:lang(bn) .sub, :lang(bn) .letter-body, :lang(bn) .scanner h2 { font-family: "Tiro Bangla", serif; }
+:lang(bn) .sub { font-size: 16.5px; }
+:lang(bn) .letter-body { font-size: 16px; line-height: 1.8; }
+:lang(bn) .tabs button, :lang(bn) .type, :lang(bn) .seg button { font-weight: 600; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }
@@ -95,7 +99,7 @@ button { cursor: pointer; }
 @keyframes sheen { to { background-position: 200% center; } }
 .beat { display: inline-block; color: var(--rose); -webkit-text-fill-color: var(--rose); animation: beat 1.5s ease-in-out infinite; }
 @keyframes beat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.22); } 30% { transform: scale(1); } 45% { transform: scale(1.12); } }
-.sub { font-family: "Playfair Display", "Hind Siliguri", serif; font-style: italic; color: var(--muted); margin: 8px 0 22px; font-size: 17px; }
+.sub { font-family: "Playfair Display", "Baloo Da 2", serif; font-style: italic; color: var(--muted); margin: 8px 0 22px; font-size: 17px; }
 :lang(bn) .sub { font-style: normal; }
 
 /* ---------- segmented controls ---------- */
@@ -336,7 +340,7 @@ input[type="range"] { accent-color: var(--rose); width: 100%; }
 
 /* ---------- scanner ---------- */
 .scan-view { max-width: 620px; margin: 0 auto; }
-.scanner h2 { font-family: "Playfair Display", "Hind Siliguri", serif; margin: 0 0 4px; font-size: 26px; font-weight: 600; }
+.scanner h2 { font-family: "Playfair Display", "Baloo Da 2", serif; margin: 0 0 4px; font-size: 26px; font-weight: 600; }
 .scanner .muted { margin: 0 0 18px; }
 .viewfinder {
   position: relative; aspect-ratio: 1; max-height: 440px; width: 100%; margin: 0 auto; border-radius: 26px; overflow: hidden;
@@ -406,7 +410,7 @@ input[type="range"] { accent-color: var(--rose); width: 100%; }
 .envelope.open .letter { transform: translateY(-62%); bottom: -30%; z-index: 5; overflow: auto; }
 .letter-hi { font-family: "Great Vibes", "Galada", cursive; font-size: 40px; margin: 0; color: #e8457a; line-height: 1.2; }
 :lang(bn) .letter-hi { font-family: "Galada", cursive; font-size: 32px; }
-.letter-body { font-family: "Playfair Display", "Hind Siliguri", serif; font-size: 16px; line-height: 1.65; margin: 10px 0; flex: 1; }
+.letter-body { font-family: "Playfair Display", "Baloo Da 2", serif; font-size: 16px; line-height: 1.65; margin: 10px 0; flex: 1; }
 .letter-from { font-family: "Great Vibes", "Galada", cursive; font-size: 26px; margin: 0 0 14px; text-align: right; color: #8e3b78; }
 .letter > * { opacity: 0; transition: opacity 0.5s 0.9s; }
 .letter .btn { transition-delay: 1.3s; }

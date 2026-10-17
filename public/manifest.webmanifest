@@ -1,7 +1,8 @@
 {
-  "name": "Love QR Studio",
-  "short_name": "Love QR",
-  "description": "A little QR studio, made just for you.",
+  "name": "লাভ QR স্টুডিও",
+  "short_name": "লাভ QR",
+  "description": "শুধু তোমার জন্য বানানো ছোট্ট একটা QR স্টুডিও",
+  "lang": "bn",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

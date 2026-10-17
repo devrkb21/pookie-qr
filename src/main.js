@@ -6,16 +6,23 @@ import "@fontsource/poppins/latin-400.css";
 import "@fontsource/poppins/latin-500.css";
 import "@fontsource/poppins/latin-600.css";
 import "@fontsource/poppins/latin-700.css";
-import "@fontsource/hind-siliguri/bengali-400.css";
-import "@fontsource/hind-siliguri/bengali-500.css";
-import "@fontsource/hind-siliguri/bengali-600.css";
+import "@fontsource/baloo-da-2/bengali-400.css";
+import "@fontsource/baloo-da-2/bengali-500.css";
+import "@fontsource/baloo-da-2/bengali-600.css";
+import "@fontsource/baloo-da-2/bengali-700.css";
+import "@fontsource/baloo-da-2/latin-400.css";
+import "@fontsource/baloo-da-2/latin-500.css";
+import "@fontsource/baloo-da-2/latin-600.css";
+import "@fontsource/baloo-da-2/latin-700.css";
+import "@fontsource/tiro-bangla/bengali-400.css";
+import "@fontsource/tiro-bangla/bengali-400-italic.css";
 import "@fontsource/galada/bengali-400.css";
 import "@fontsource/galada/latin-400.css";
 import "./styles.css";
 
 import QRCodeStyling from "qr-code-styling";
 import { CONFIG } from "./config.js";
-import { t, tc, setLang, getLang } from "./i18n.js";
+import { t, tc, num, setLang } from "./i18n.js";
 import { TYPES, typeById } from "./qr-data.js";
 import { renderCard, ensureFonts, contrast, FRAMES, QR_BASE } from "./card.js";
 import { initScanner, decodeDrawable } from "./scanner.js";
@@ -53,7 +60,7 @@ const SHAPE_BADGES = {
 };
 const EMOJI_BADGES = ["💍", "🌹", "🌸", "🦋", "🐱", "🧸", "🎀", "☕", "🌙", "✨", "🍓", "🎂", "🏠", "📶", "🎵", "📞"];
 
-const PLACEHOLDER = "I love you ♥";
+const PLACEHOLDER = CONFIG.defaultMessage;
 const STORE_KEY = "lqr-state-v2";
 const HIST_KEY = "lqr-history-v2";
 
@@ -61,13 +68,13 @@ const HIST_KEY = "lqr-history-v2";
    State
    ================================================================ */
 const DEFAULT_STATE = {
-  type: "link",
-  fields: {},
+  type: "text",
+  fields: { text: { message: CONFIG.defaultMessage } },
   mood: 0,
   c1: MOODS[0].c1, c2: MOODS[0].c2, eye: MOODS[0].eye, bg: MOODS[0].bg,
   shape: "square", dot: "rounded", eyeStyle: "extra-rounded", eyeDot: "dot",
   gradient: "linear", angle: 45, transparent: false,
-  frame: "card", title: "", caption: "", font: "script",
+  frame: "card", title: "", caption: "", font: "bangla",
   badge: "heart", badgeSize: 0.3, roundPhoto: true, photo: null,
   quality: 2,
   lang: CONFIG.defaultLang,
@@ -185,7 +192,7 @@ async function makeQr(data, size) {
 function cardOptions(qr, scale) {
   return {
     qr, scale, frame: state.frame, c1: state.c1, c2: state.c2, bg: state.bg,
-    title: state.title.trim(), caption: state.caption.trim(), font: state.font,
+    title: state.title.trim(), caption: state.caption.trim(), font: state.font, scanLabel: t("ph_title"),
     transparent: state.transparent && state.frame === "plain",
   };
 }
@@ -225,7 +232,7 @@ async function render() {
   renderFrameThumbs(qr);
   drawPip();
   const bytes = new TextEncoder().encode(payload).length;
-  $("#count").textContent = payload ? `${bytes} ${t("chars")}` : "";
+  $("#count").textContent = payload ? `${num(bytes)} ${t("chars")}` : "";
   ["#dlPng", "#dlJpg", "#dlSvg", "#copyBtn", "#shareBtn", "#mDl", "#mShare"].forEach((s) => ($(s).disabled = !payload));
   scheduleCheck(qr, payload, token);
 }
@@ -467,13 +474,13 @@ function syncControls() {
   setSeg("#fontSeg", state.font);
   setSeg("#qualitySeg", state.quality);
   $("#angle").value = state.angle;
-  $("#angleOut").textContent = state.angle + "°";
+  $("#angleOut").textContent = num(state.angle) + "°";
   $("#angleWrap").hidden = state.gradient !== "linear";
   $("#transparent").checked = state.transparent;
   $("#title").value = state.title;
   $("#caption").value = state.caption;
   $("#badgeSize").value = state.badgeSize;
-  $("#badgeSizeOut").textContent = Math.round(state.badgeSize * 100) + "%";
+  $("#badgeSizeOut").textContent = num(Math.round(state.badgeSize * 100)) + "%";
   $("#roundPhoto").checked = state.roundPhoto;
 }
 
@@ -514,11 +521,11 @@ wireSeg("#qualitySeg", "quality", Number);
   if (SHAPE_BADGES[state.badge]) buildBadges();
   update();
 }));
-$("#angle").addEventListener("input", (e) => { state.angle = +e.target.value; $("#angleOut").textContent = state.angle + "°"; update(); });
+$("#angle").addEventListener("input", (e) => { state.angle = +e.target.value; $("#angleOut").textContent = num(state.angle) + "°"; update(); });
 $("#transparent").addEventListener("change", (e) => { state.transparent = e.target.checked; update(true); });
 $("#title").addEventListener("input", (e) => { state.title = e.target.value; update(); });
 $("#caption").addEventListener("input", (e) => { state.caption = e.target.value; update(); });
-$("#badgeSize").addEventListener("input", (e) => { state.badgeSize = +e.target.value; $("#badgeSizeOut").textContent = Math.round(state.badgeSize * 100) + "%"; update(); });
+$("#badgeSize").addEventListener("input", (e) => { state.badgeSize = +e.target.value; $("#badgeSizeOut").textContent = num(Math.round(state.badgeSize * 100)) + "%"; update(); });
 $("#roundPhoto").addEventListener("change", (e) => { state.roundPhoto = e.target.checked; update(true); });
 $("#badgeFile").addEventListener("change", (e) => { onPhoto(e.target.files[0]); e.target.value = ""; });
 const tile = $("#uploadTile");
@@ -769,6 +776,7 @@ function applyLanguage(lang) {
   setLang(lang);
   $$("#langSeg button").forEach((b) => b.classList.toggle("on", b.dataset.lang === lang));
   $$(".her-name").forEach((n) => (n.textContent = tc(CONFIG.herName)));
+  document.title = t("brand");
   $("#letterBody").textContent = tc(CONFIG.welcome);
   $("#letterFrom").textContent = tc(CONFIG.from);
   buildAll();

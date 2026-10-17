@@ -6,10 +6,10 @@ export const QR_BASE = 520;
 export const FRAMES = ["plain", "polaroid", "card", "scanme", "letter"];
 
 const FONTS = {
-  script: { family: '"Great Vibes", "Galada", "Hind Siliguri", cursive', size: 66, style: "" },
-  serif: { family: '"Playfair Display", "Hind Siliguri", serif', size: 46, style: "italic 500" },
-  clean: { family: '"Poppins", "Hind Siliguri", sans-serif', size: 40, style: "500" },
-  bangla: { family: '"Galada", "Hind Siliguri", cursive', size: 54, style: "" },
+  script: { family: '"Great Vibes", "Galada", "Baloo Da 2", cursive', size: 66, style: "" },
+  serif: { family: '"Playfair Display", "Tiro Bangla", serif', size: 46, style: "italic 500" },
+  clean: { family: '"Poppins", "Baloo Da 2", sans-serif', size: 40, style: "600" },
+  bangla: { family: '"Galada", "Baloo Da 2", cursive', size: 58, style: "" },
 };
 
 let fontsReady;
@@ -21,7 +21,10 @@ export function ensureFonts() {
     document.fonts.load('500 40px "Poppins"'),
     document.fonts.load('700 40px "Poppins"'),
     document.fonts.load('54px "Galada"', "ভালোবাসা"),
-    document.fonts.load('500 40px "Hind Siliguri"', "ভালোবাসা"),
+    document.fonts.load('600 40px "Baloo Da 2"', "ভালোবাসা"),
+    document.fonts.load('700 40px "Baloo Da 2"', "ভালোবাসা"),
+    document.fonts.load('46px "Tiro Bangla"', "ভালোবাসা"),
+    document.fonts.load('italic 46px "Tiro Bangla"', "ভালোবাসা"),
   ]).catch(() => {});
   return fontsReady;
 }
@@ -199,8 +202,9 @@ const LAYOUTS = {
         ctx.fillStyle = grad(ctx, px, py, pw, pillH, o.c1, o.c2);
         rr(ctx, px, py, pw, pillH, pillH / 2);
         ctx.fill();
-        const label = (o.title || "Scan me ♥").toLocaleUpperCase();
-        text(ctx, label, w / 2, py + pillH / 2 + 2, pw - 60, { family: FONTS.clean.family, size: 46, style: "700", color: "#fff", spacing: 4 });
+        const label = (o.title || o.scanLabel || "Scan me ♥").toLocaleUpperCase();
+        const latin = !/[\u0980-\u09FF]/.test(label);
+        text(ctx, label, w / 2, py + pillH / 2 + (latin ? 2 : 6), pw - 60, { family: FONTS.clean.family, size: latin ? 46 : 48, style: "700", color: "#fff", spacing: latin ? 4 : 0 });
         text(ctx, o.caption, w / 2, py + pillH + capH / 2 + 8, w - pad * 2, { ...o.font, color: o.c2 });
       },
     };

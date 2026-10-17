@@ -41,7 +41,7 @@ export const TYPES = [
   {
     id: "wifi", icon: "📶",
     fields: [
-      { id: "ssid", label: "f_ssid", type: "text", ph: "Home Wi-Fi", half: true },
+      { id: "ssid", label: "f_ssid", type: "text", ph: "ph_ssid", half: true },
       { id: "password", label: "f_password", type: "text", half: true },
       { id: "security", label: "f_security", type: "select", options: [["WPA", "WPA / WPA2 / WPA3"], ["WEP", "WEP"], ["nopass", "sec_none"]] },
       { id: "hidden", label: "f_hidden", type: "checkbox" },
@@ -69,7 +69,7 @@ export const TYPES = [
     id: "whatsapp", icon: "💬",
     fields: [
       { id: "phone", label: "f_waNumber", type: "tel", ph: "8801XXXXXXXXX" },
-      { id: "text", label: "f_prefill", type: "text", ph: "Hi! 👋" },
+      { id: "text", label: "f_prefill", type: "text", ph: "ph_hi" },
     ],
     build: (v) => {
       const n = v.phone.replace(/\D/g, "");
@@ -153,7 +153,7 @@ export const TYPES = [
       { id: "platform", label: "f_platform", type: "select",
         options: [["instagram", "Instagram"], ["facebook", "Facebook"], ["youtube", "YouTube"], ["tiktok", "TikTok"],
           ["telegram", "Telegram"], ["x", "X (Twitter)"], ["linkedin", "LinkedIn"], ["pinterest", "Pinterest"]] },
-      { id: "username", label: "f_username", type: "text", ph: "username" },
+      { id: "username", label: "f_username", type: "text", ph: "ph_username" },
     ],
     build: (v) => {
       const u = v.username.trim().replace(/^@/, "");
@@ -169,7 +169,7 @@ export function describePayload(text) {
   if (/^https?:\/\//i.test(text)) return { kind: "link", open: text };
   if (/^WIFI:/i.test(text)) {
     const get = (k) => (text.match(new RegExp(`[;:]${k}:((?:\\\\.|[^;])*)`)) || [])[1]?.replace(/\\(.)/g, "$1") || "";
-    return { kind: "wifi", lines: [["Wi-Fi", get("S")], ["Password", get("P")], ["Security", get("T")]] };
+    return { kind: "wifi", lines: [["t_wifi", get("S")], ["f_password", get("P")], ["f_security", get("T")]] };
   }
   if (/^(tel|mailto|sms|smsto):/i.test(text)) return { kind: "action", open: text.replace(/^SMSTO:([^:]+):/i, "sms:$1?body=") };
   if (/^BEGIN:VCARD/i.test(text)) return { kind: "contact" };

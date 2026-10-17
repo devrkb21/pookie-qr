@@ -15,6 +15,9 @@ export const CONFIG = {
   // Signature at the end of the welcome note
   from: { en: "— with all my love", bn: "— অনেক ভালোবাসা নিয়ে" },
 
-  // Language she sees first: "en" or "bn"
-  defaultLang: "en",
+  // Language she sees first: "bn" or "en"
+  defaultLang: "bn",
+
+  // What the QR code holds when the app opens for the first time
+  defaultMessage: "ভালোবাসি ভালোবাসা",
 };
