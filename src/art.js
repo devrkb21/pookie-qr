@@ -26,8 +26,23 @@ function functionMap(n) {
   return f;
 }
 
-const hex = (h) => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
-const css = ([r, g, b]) => `rgb(${r},${g},${b})`;
+const css = ([r, g, b], a = 1) => `rgba(${r | 0},${g | 0},${b | 0},${a})`;
+const lumOf = ([r, g, b]) => (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+// Same hue as the photo, but dark enough (≤ maxL) to read as a QR "dark" module…
+function darkOf(p, maxL) {
+  const l = lumOf(p);
+  if (l <= maxL) return p;
+  const k = maxL / l;
+  return p.map((v) => v * k);
+}
+// …or light enough (≥ minL) to read as a "light" module.
+function lightOf(p, minL) {
+  const l = lumOf(p);
+  if (l >= minL) return p;
+  const t = (minL - l) / (1 - l);
+  return p.map((v) => v + (255 - v) * t);
+}
 
 /**
  * @param {object} o
@@ -35,15 +50,13 @@ const css = ([r, g, b]) => `rgb(${r},${g},${b})`;
  *   photo  drawable image
  *   size   output px
  *   style  "color" | "mono" | "tint"
- *   safety 0..1 — bigger, cleaner center dots = easier scanning
- *   dark   hex color for dark modules / eyes
+ *   safety 0..1 — bigger dots and stronger contrast = easier scanning
  *   tint   hex color used by the "tint" style
  */
-export function renderArtQr({ qr, photo, size, style = "color", safety = 0.5, dark = "#1d1d1f", tint = "#e8457a" }) {
+export function renderArtQr({ qr, photo, size, style = "color", safety = 0.5, tint = "#e8457a" }) {
   const n = qr.getModuleCount();
   const fn = functionMap(n);
   const cell = size / n;
-  const DARK = hex(dark);
 
   const out = document.createElement("canvas");
   out.width = out.height = size;
@@ -66,41 +79,68 @@ export function renderArtQr({ qr, photo, size, style = "color", safety = 0.5, da
   }
   ctx.restore();
 
-  // 2) a light veil per module nudges each area toward its QR color (keeps the photo visible)
-  const veil = 0.06 + safety * 0.26;
-  // 3) a round dot in the middle of each module is what the scanner actually reads
-  const dot = cell * (0.3 + safety * 0.24);
-  const darkCss = css(DARK);
+  // the photo's own color under every module, so the QR is painted in the picture's colors
+  const sc = document.createElement("canvas");
+  sc.width = sc.height = n;
+  const sx = sc.getContext("2d", { willReadFrequently: true });
+  sx.drawImage(out, 0, 0, n, n);
+  const px = sx.getImageData(0, 0, n, n).data;
+  const colorAt = (r, c) => { const k = (r * n + c) * 4; return [px[k], px[k + 1], px[k + 2]]; };
+
+  // contrast targets: more safety = darker darks, lighter lights and a stronger veil
+  const maxDark = 0.16 - safety * 0.08;
+  const minLight = 0.86 + safety * 0.1;
+  const veil = 0.08 + safety * 0.5;
+  const dot = cell * 0.34; // a fixed size scans best; bigger dots confuse scanners over dark areas
+
+  const isEye = (r, c) => (r < 8 && c < 8) || (r < 8 && c >= n - 8) || (r >= n - 8 && c < 8);
 
   for (let r = 0; r < n; r++) {
     for (let c = 0; c < n; c++) {
+      if (isEye(r, c)) continue;
       const isDark = qr.isDark(r, c);
+      const base = colorAt(r, c);
+      const col = isDark ? darkOf(base, maxDark) : lightOf(base, minLight);
       const x = c * cell, y = r * cell;
       if (fn[r][c] && r !== 6 && c !== 6) {
-        ctx.fillStyle = isDark ? darkCss : "#fff";
-        ctx.fillRect(x - 0.5, y - 0.5, cell + 1, cell + 1);
+        // format / alignment / version areas: whole module, in the photo's tones
+        ctx.fillStyle = css(col, 0.92);
+        ctx.fillRect(x, y, cell, cell);
         continue;
       }
-      ctx.fillStyle = isDark ? `rgba(${DARK},${veil})` : `rgba(255,255,255,${veil + 0.06})`;
+      ctx.fillStyle = css(col, veil);
       ctx.fillRect(x, y, cell, cell);
       const d = fn[r][c] ? cell * 0.6 : dot; // timing lines get slightly bigger dots
-      ctx.fillStyle = isDark ? darkCss : "#fff";
+      ctx.fillStyle = css(col);
       ctx.beginPath();
       ctx.arc(x + cell / 2, y + cell / 2, d / 2, 0, Math.PI * 2);
       ctx.fill();
     }
   }
 
-  // round, softly-styled finder eyes drawn on top
+  // finder eyes: see-through light parts and dark parts tinted from the photo underneath
   const eye = (r0, c0) => {
+    let sum = [0, 0, 0];
+    for (let r = 0; r < 7; r++) for (let c = 0; c < 7; c++) sum = sum.map((v, i) => v + colorAt(r0 + r, c0 + c)[i]);
+    const avg = sum.map((v) => v / 49);
+    const dk = darkOf(avg, Math.min(maxDark, 0.16));
+    const lt = lightOf(avg, Math.max(minLight, 0.88));
     const x = c0 * cell, y = r0 * cell;
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(x - cell, y - cell, cell * 9, cell * 9);
-    ctx.fillStyle = darkCss;
-    ctx.beginPath(); ctx.roundRect(x, y, cell * 7, cell * 7, cell * 2); ctx.fill();
-    ctx.fillStyle = "#fff";
-    ctx.beginPath(); ctx.roundRect(x + cell, y + cell, cell * 5, cell * 5, cell * 1.4); ctx.fill();
-    ctx.fillStyle = darkCss;
+    const ring = (outer, inner, fill) => {
+      ctx.beginPath();
+      outer();
+      inner();
+      ctx.fillStyle = fill;
+      ctx.fill("evenodd");
+    };
+    // one-module light separator around the eye
+    ring(() => ctx.rect(x - cell, y - cell, cell * 9, cell * 9), () => ctx.rect(x, y, cell * 7, cell * 7), css(lt, 0.97));
+    // dark outer ring
+    ring(() => ctx.roundRect(x, y, cell * 7, cell * 7, cell * 2), () => ctx.roundRect(x + cell, y + cell, cell * 5, cell * 5, cell * 1.4), css(dk));
+    // light inner ring: the photo still shows through
+    ring(() => ctx.roundRect(x + cell, y + cell, cell * 5, cell * 5, cell * 1.4), () => ctx.roundRect(x + cell * 2, y + cell * 2, cell * 3, cell * 3, cell), css(lt, 0.97));
+    // dark center
+    ctx.fillStyle = css(dk);
     ctx.beginPath(); ctx.roundRect(x + cell * 2, y + cell * 2, cell * 3, cell * 3, cell); ctx.fill();
   };
   eye(0, 0); eye(0, n - 7); eye(n - 7, 0);

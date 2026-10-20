@@ -26,7 +26,7 @@ import { t, tc, num, setLang } from "./i18n.js";
 import { TYPES, typeById } from "./qr-data.js";
 import { renderCard, ensureFonts, contrast, FRAMES, QR_BASE } from "./card.js";
 import { initScanner, decodeDrawable } from "./scanner.js";
-import { buildPhotoForm, compressPhoto } from "./photo.js";
+import { buildPhotoForm, compressPhoto, hasAlpha } from "./photo.js";
 import { renderArtQr } from "./art.js";
 
 const $ = (s, root = document) => root.querySelector(s);
@@ -284,7 +284,7 @@ function scheduleCheck(qr, data, token) {
     x.fillStyle = state.transparent && state.frame === "plain" ? "#ffffff" : state.bg;
     x.fillRect(0, 0, 560, 560);
     x.drawImage(qr, 20, 20, 520, 520);
-    const res = decodeDrawable(c, 560, 560, [560, 400]);
+    const res = decodeDrawable(c, 560, 560, [560, 400, 300]);
     const ok = res && (res.data === data || res.binaryData?.length === new TextEncoder().encode(data).length);
     if (!ok) return setCheck("bad", t("chk_bad"));
     const minC = Math.min(contrast(state.c1, state.bg), contrast(state.c2, state.bg), contrast(state.eye, state.bg));
@@ -480,7 +480,7 @@ async function onPhoto(file) {
     const c = document.createElement("canvas");
     c.width = c.height = 400;
     c.getContext("2d").drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 400, 400);
-    state.photo = c.toDataURL("image/jpeg", 0.88);
+    state.photo = hasAlpha(c) ? c.toDataURL("image/png") : c.toDataURL("image/jpeg", 0.88);
     state.badge = "photo";
     buildBadges();
     update(true);

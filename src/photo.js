@@ -13,6 +13,19 @@ function el(tag, props = {}, children = []) {
 
 const toBlob = (c, type, q) => new Promise((r) => c.toBlob(r, type, q));
 
+/** true when the picture has see-through pixels (e.g. a PNG logo) */
+export function hasAlpha(canvas) {
+  const k = Math.min(1, 200 / Math.max(canvas.width, canvas.height));
+  const t = document.createElement("canvas");
+  t.width = Math.max(1, Math.round(canvas.width * k));
+  t.height = Math.max(1, Math.round(canvas.height * k));
+  const x = t.getContext("2d", { willReadFrequently: true });
+  x.drawImage(canvas, 0, 0, t.width, t.height);
+  const d = x.getImageData(0, 0, t.width, t.height).data;
+  for (let i = 3; i < d.length; i += 4) if (d[i] < 250) return true;
+  return false;
+}
+
 /** Shrink a photo so it uploads fast but still looks sharp on a phone. */
 export async function compressPhoto(file) {
   const bmp = await createImageBitmap(file, { imageOrientation: "from-image" }).catch(() => createImageBitmap(file));
@@ -22,10 +35,12 @@ export async function compressPhoto(file) {
   c.height = Math.round(bmp.height * k);
   c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
 
+  // WebP keeps transparency; where WebP isn't available, transparent pictures stay PNG (JPEG would turn them black)
+  const alpha = hasAlpha(c);
   let q = 0.84, blob = await toBlob(c, "image/webp", q);
-  const type = blob?.type === "image/webp" ? "image/webp" : "image/jpeg";
+  const type = blob?.type === "image/webp" ? "image/webp" : alpha ? "image/png" : "image/jpeg";
   if (type !== "image/webp") blob = await toBlob(c, type, q);
-  while (blob.size > 1.4 * 1024 * 1024 && q > 0.5) {
+  while (type !== "image/png" && blob.size > 1.4 * 1024 * 1024 && q > 0.5) {
     q -= 0.08;
     blob = await toBlob(c, type, q);
   }
@@ -35,7 +50,7 @@ export async function compressPhoto(file) {
   p.width = Math.round(c.width * s);
   p.height = Math.round(c.height * s);
   p.getContext("2d").drawImage(c, 0, 0, p.width, p.height);
-  return { blob, thumb: p.toDataURL("image/jpeg", 0.8) };
+  return { blob, thumb: alpha ? p.toDataURL("image/png") : p.toDataURL("image/jpeg", 0.8) };
 }
 
 async function upload(blob, msg) {
