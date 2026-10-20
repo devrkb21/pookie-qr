@@ -79,7 +79,7 @@ const DEFAULT_STATE = {
   frame: "card", title: "", caption: "", font: "bangla",
   badge: "heart", badgeSize: 0.3, roundPhoto: true, photo: null,
   quality: 2,
-  art: false, artPhoto: null, artStyle: "color", artSafety: 0.5,
+  art: false, artPhoto: null, artStyle: "color", artSafety: 0.35,
   lang: CONFIG.defaultLang,
 };
 
@@ -244,7 +244,7 @@ async function render() {
   view.height = card.height;
   view.style.width = card.width / 2 + "px";
   view.getContext("2d").drawImage(card, 0, 0);
-  view.classList.toggle("dim", !payload);
+  view.classList.toggle("dim", !payload && !artOn());
   view.classList.remove("pop"); void view.offsetWidth; view.classList.add("pop");
 
   renderFrameThumbs(qr);

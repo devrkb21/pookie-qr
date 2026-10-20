@@ -1,7 +1,7 @@
 // "ছবির QR": the photo itself becomes the QR code (halftone QR).
 //
-// Every QR module is split into a 3×3 grid. The outer 8 cells take the photo's colors,
-// the center cell keeps the real QR color, which is what a scanner reads.
+// The photo is drawn smooth and full-size; on top of it every QR module gets a small round dot
+// in the real QR color (that is what a scanner reads) plus a faint veil toward that color.
 // Finder "eyes", timing lines, alignment and format areas stay solid so phones lock on fast.
 
 // Alignment pattern centers per QR version (1–40)
@@ -27,9 +27,7 @@ function functionMap(n) {
 }
 
 const hex = (h) => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
-const mix = (a, b, t) => a.map((x, i) => Math.round(x + (b[i] - x) * t));
 const css = ([r, g, b]) => `rgb(${r},${g},${b})`;
-const lum = ([r, g, b]) => (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 
 /**
  * @param {object} o
@@ -44,60 +42,51 @@ const lum = ([r, g, b]) => (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 export function renderArtQr({ qr, photo, size, style = "color", safety = 0.5, dark = "#1d1d1f", tint = "#e8457a" }) {
   const n = qr.getModuleCount();
   const fn = functionMap(n);
-  const S = n * 3;
+  const cell = size / n;
+  const DARK = hex(dark);
 
-  // sample the photo (center-cropped to a square) at 3 px per module
-  const sc = document.createElement("canvas");
-  sc.width = sc.height = S;
-  const sx = sc.getContext("2d", { willReadFrequently: true });
-  const pw = photo.width || photo.naturalWidth, ph = photo.height || photo.naturalHeight;
-  const side = Math.min(pw, ph);
-  sx.drawImage(photo, (pw - side) / 2, (ph - side) / 2, side, side, 0, 0, S, S);
-  const px = sx.getImageData(0, 0, S, S).data;
-
-  const DARK = hex(dark), LIGHT = [255, 255, 255], TINT = hex(tint);
   const out = document.createElement("canvas");
   out.width = out.height = size;
   const ctx = out.getContext("2d");
   ctx.fillStyle = "#fff";
   ctx.fillRect(0, 0, size, size);
 
-  const cell = size / n, sub = cell / 3;
-  // the photo is pushed a little toward the module color so contrast survives
-  const push = 0.12 + safety * 0.33;
+  // 1) the photo, drawn smooth and full-resolution (center-cropped to a square)
+  const pw = photo.width || photo.naturalWidth, ph = photo.height || photo.naturalHeight;
+  const side = Math.min(pw, ph);
+  ctx.save();
+  ctx.imageSmoothingQuality = "high";
+  ctx.filter = style === "color" ? "saturate(1.15) contrast(1.06)" : "grayscale(1) contrast(1.2)";
+  ctx.drawImage(photo, (pw - side) / 2, (ph - side) / 2, side, side, 0, 0, size, size);
+  ctx.filter = "none";
+  if (style === "tint") {
+    ctx.globalCompositeOperation = "color";
+    ctx.fillStyle = tint;
+    ctx.fillRect(0, 0, size, size);
+  }
+  ctx.restore();
+
+  // 2) a light veil per module nudges each area toward its QR color (keeps the photo visible)
+  const veil = 0.06 + safety * 0.26;
+  // 3) a round dot in the middle of each module is what the scanner actually reads
+  const dot = cell * (0.3 + safety * 0.24);
+  const darkCss = css(DARK);
 
   for (let r = 0; r < n; r++) {
     for (let c = 0; c < n; c++) {
       const isDark = qr.isDark(r, c);
       const x = c * cell, y = r * cell;
-      if (fn[r][c]) {
-        ctx.fillStyle = css(isDark ? DARK : LIGHT);
+      if (fn[r][c] && r !== 6 && c !== 6) {
+        ctx.fillStyle = isDark ? darkCss : "#fff";
         ctx.fillRect(x - 0.5, y - 0.5, cell + 1, cell + 1);
         continue;
       }
-      const target = isDark ? DARK : LIGHT;
-      for (let i = 0; i < 3; i++) {
-        for (let j = 0; j < 3; j++) {
-          if (i === 1 && j === 1) continue;
-          const k = ((r * 3 + i) * S + (c * 3 + j)) * 4;
-          let col = [px[k], px[k + 1], px[k + 2]];
-          if (style === "mono") {
-            const l = lum(col);
-            col = l > 0.5 ? mix(LIGHT, [200, 200, 200], 1 - (l - 0.5) * 2) : mix(DARK, [70, 70, 70], l * 2);
-          } else if (style === "tint") {
-            const l = lum(col);
-            col = mix(mix(DARK, TINT, 0.55), [255, 240, 246], l);
-          }
-          col = mix(col, target, push);
-          ctx.fillStyle = css(col);
-          ctx.fillRect(x + j * sub - 0.25, y + i * sub - 0.25, sub + 0.5, sub + 0.5);
-        }
-      }
-      // the readable center dot
-      const d = sub * (1 + safety * 0.75);
-      ctx.fillStyle = css(target);
+      ctx.fillStyle = isDark ? `rgba(${DARK},${veil})` : `rgba(255,255,255,${veil + 0.06})`;
+      ctx.fillRect(x, y, cell, cell);
+      const d = fn[r][c] ? cell * 0.6 : dot; // timing lines get slightly bigger dots
+      ctx.fillStyle = isDark ? darkCss : "#fff";
       ctx.beginPath();
-      ctx.roundRect(x + (cell - d) / 2, y + (cell - d) / 2, d, d, d * 0.28);
+      ctx.arc(x + cell / 2, y + cell / 2, d / 2, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -107,11 +96,11 @@ export function renderArtQr({ qr, photo, size, style = "color", safety = 0.5, da
     const x = c0 * cell, y = r0 * cell;
     ctx.fillStyle = "#fff";
     ctx.fillRect(x - cell, y - cell, cell * 9, cell * 9);
-    ctx.fillStyle = css(DARK);
+    ctx.fillStyle = darkCss;
     ctx.beginPath(); ctx.roundRect(x, y, cell * 7, cell * 7, cell * 2); ctx.fill();
     ctx.fillStyle = "#fff";
     ctx.beginPath(); ctx.roundRect(x + cell, y + cell, cell * 5, cell * 5, cell * 1.4); ctx.fill();
-    ctx.fillStyle = css(DARK);
+    ctx.fillStyle = darkCss;
     ctx.beginPath(); ctx.roundRect(x + cell * 2, y + cell * 2, cell * 3, cell * 3, cell); ctx.fill();
   };
   eye(0, 0); eye(0, n - 7); eye(n - 7, 0);
