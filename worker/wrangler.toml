@@ -9,7 +9,7 @@ routes = [{ pattern = "img.czbd.app", custom_domain = true }]
 # Photos live here. Fill in the id after: npx wrangler kv namespace create IMAGES
 [[kv_namespaces]]
 binding = "IMAGES"
-id = "PASTE_KV_NAMESPACE_ID_HERE"
+id = "d2332cc75bcf47d1b6931516d4d71ce6"
 
 [vars]
 # Websites allowed to upload
