@@ -3,11 +3,7 @@
 import { CONFIG } from "./config.js";
 import { t } from "./i18n.js";
 
-const KEY_STORE = "lqr-upload-key";
 let pending = null; // the compressed photo waiting to be uploaded (kept in memory only)
-
-const getKey = () => { try { return localStorage.getItem(KEY_STORE) || ""; } catch { return ""; } };
-const setKey = (k) => { try { k ? localStorage.setItem(KEY_STORE, k) : localStorage.removeItem(KEY_STORE); } catch {} };
 
 function el(tag, props = {}, children = []) {
   const n = Object.assign(document.createElement(tag), props);
@@ -42,13 +38,13 @@ export async function compressPhoto(file) {
   return { blob, thumb: p.toDataURL("image/jpeg", 0.8) };
 }
 
-async function upload(blob, msg, key) {
+async function upload(blob, msg) {
   const res = await fetch(`${CONFIG.imageApi}/upload`, {
     method: "POST",
-    headers: { "Content-Type": blob.type, "X-Upload-Key": key, "X-Message": encodeURIComponent(msg) },
+    headers: { "Content-Type": blob.type, "X-Message": encodeURIComponent(msg) },
     body: blob,
   });
-  if (res.status === 401) throw new Error("bad-key");
+  if (res.status === 429) throw new Error("slow-down");
   if (res.status === 413) throw new Error("too-big");
   if (!res.ok) throw new Error("fail");
   return (await res.json()).id;
@@ -97,26 +93,15 @@ export function buildPhotoForm(vals, ctx) {
   });
   nodes.push(el("label", { className: "fld" }, [el("span", { textContent: t("f_photoMsg") }), msg]));
 
-  // upload key (only until it has been accepted once)
-  let keyInput = null;
-  if (!getKey()) {
-    keyInput = el("input", { type: "password", autocomplete: "off", placeholder: "••••••••" });
-    nodes.push(el("label", { className: "fld" }, [el("span", { textContent: t("f_key") }), keyInput]));
-    nodes.push(el("div", { className: "note", textContent: t("key_note") }));
-  }
-
   // upload button
   const btn = el("button", { className: "btn primary up-btn", type: "button", textContent: t(vals.url ? "up_again" : "up_btn") });
   btn.hidden = !!vals.url && !dirty;
   btn.addEventListener("click", async () => {
     if (!pending) return ctx.toast(t(vals.thumb ? "up_reselect" : "up_need"));
-    const key = keyInput ? keyInput.value.trim() : getKey();
-    if (!key) { keyInput?.focus(); return ctx.toast(t("f_key")); }
     btn.disabled = true;
     btn.textContent = t("up_busy");
     try {
-      const id = await upload(pending, vals.msg || "", key);
-      setKey(key);
+      const id = await upload(pending, vals.msg || "");
       pending = null;
       vals.url = CONFIG.photoPage + id;
       vals.upMsg = vals.msg || "";
@@ -125,8 +110,7 @@ export function buildPhotoForm(vals, ctx) {
       ctx.celebrate(document.querySelector("#form .photo-pick"));
       ctx.toast(t("up_done"));
     } catch (e) {
-      if (e.message === "bad-key") { setKey(""); ctx.rebuild(); }
-      ctx.toast(t(e.message === "bad-key" ? "up_badkey" : e.message === "too-big" ? "up_tooBig" : "up_fail"));
+      ctx.toast(t(e.message === "slow-down" ? "up_slow" : e.message === "too-big" ? "up_tooBig" : "up_fail"));
       btn.disabled = false;
       btn.textContent = t(vals.url ? "up_again" : "up_btn");
     }

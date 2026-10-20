@@ -11,6 +11,12 @@ routes = [{ pattern = "img.czbd.app", custom_domain = true }]
 binding = "IMAGES"
 id = "d2332cc75bcf47d1b6931516d4d71ce6"
 
+# At most 5 uploads per visitor per minute
+[[ratelimits]]
+name = "UPLOAD_LIMIT"
+namespace_id = "1001"
+simple = { limit = 5, period = 60 }
+
 [vars]
 # Websites allowed to upload
 ALLOWED_ORIGINS = "https://qr.czbd.app,http://localhost:5173,http://localhost:4173"

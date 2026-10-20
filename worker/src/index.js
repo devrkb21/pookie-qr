@@ -1,12 +1,12 @@
 // Love QR Studio — photo storage on Cloudflare (Worker + KV).
 //
-//   POST /upload       body = image bytes, headers X-Upload-Key + X-Message  -> { id }
-//   POST /check        header X-Upload-Key                                   -> 200 if the key is right
+//   POST /upload       body = image bytes, header X-Message  -> { id }
 //   GET  /i/:id        the photo
 //   GET  /meta/:id     { msg, type, at }
 //
-// Uploads need the secret UPLOAD_KEY (set with: npx wrangler secret put UPLOAD_KEY),
-// so strangers can't fill the storage. Viewing only needs the id, which is long and random.
+// Anyone using the site can upload — no key. To keep strangers from filling the storage,
+// uploads must come from our own site (ALLOWED_ORIGINS) and each visitor is rate limited.
+// Viewing only needs the id, which is long and random.
 
 const MAX_BYTES = 3 * 1024 * 1024;
 const TYPES = ["image/webp", "image/jpeg", "image/png", "image/avif"];
@@ -18,21 +18,13 @@ function newId(len = 12) {
   return [...bytes].map((b) => ALPHABET[b % ALPHABET.length]).join("");
 }
 
-// constant-time string compare, so the key can't be guessed by timing
-function sameKey(a = "", b = "") {
-  const x = new TextEncoder().encode(a), y = new TextEncoder().encode(b);
-  let diff = x.length ^ y.length;
-  for (let i = 0; i < Math.max(x.length, y.length); i++) diff |= (x[i] ?? 0) ^ (y[i] ?? 0);
-  return diff === 0 && b.length > 0;
-}
-
 function corsFor(req, env) {
   const origin = req.headers.get("Origin") || "";
   const allowed = (env.ALLOWED_ORIGINS || "").split(",").map((s) => s.trim());
   return {
     "Access-Control-Allow-Origin": allowed.includes(origin) ? origin : allowed[0] || "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, X-Upload-Key, X-Message",
+    "Access-Control-Allow-Headers": "Content-Type, X-Message",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   };
@@ -49,9 +41,14 @@ export default {
 
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
 
-    if (req.method === "POST" && (url.pathname === "/upload" || url.pathname === "/check")) {
-      if (!sameKey(req.headers.get("X-Upload-Key") || "", env.UPLOAD_KEY)) return json({ error: "bad-key" }, 401, cors);
-      if (url.pathname === "/check") return json({ ok: true }, 200, cors);
+    if (req.method === "POST" && url.pathname === "/upload") {
+      const origin = req.headers.get("Origin") || "";
+      const allowed = (env.ALLOWED_ORIGINS || "").split(",").map((o) => o.trim());
+      if (!allowed.includes(origin)) return json({ error: "forbidden" }, 403, cors);
+      if (env.UPLOAD_LIMIT) {
+        const { success } = await env.UPLOAD_LIMIT.limit({ key: req.headers.get("CF-Connecting-IP") || "anon" });
+        if (!success) return json({ error: "slow-down" }, 429, cors);
+      }
 
       const type = (req.headers.get("Content-Type") || "").split(";")[0].trim();
       if (!TYPES.includes(type)) return json({ error: "bad-type" }, 415, cors);
