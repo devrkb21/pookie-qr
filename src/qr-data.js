@@ -39,6 +39,14 @@ export const TYPES = [
     build: (v) => v.message,
   },
   {
+    id: "photo", icon: "📷", custom: true,
+    fields: [
+      { id: "thumb", type: "hidden" }, { id: "msg", type: "hidden" },
+      { id: "url", type: "hidden" }, { id: "upMsg", type: "hidden" },
+    ],
+    build: (v) => v.url || "",
+  },
+  {
     id: "wifi", icon: "📶",
     fields: [
       { id: "ssid", label: "f_ssid", type: "text", ph: "ph_ssid", half: true },

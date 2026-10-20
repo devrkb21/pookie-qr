@@ -1,0 +1,16 @@
+# Love QR Studio — photo storage (Cloudflare Worker + KV)
+name = "love-qr-images"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# Serve the worker on our own domain
+routes = [{ pattern = "img.czbd.app", custom_domain = true }]
+
+# Photos live here. Fill in the id after: npx wrangler kv namespace create IMAGES
+[[kv_namespaces]]
+binding = "IMAGES"
+id = "PASTE_KV_NAMESPACE_ID_HERE"
+
+[vars]
+# Websites allowed to upload
+ALLOWED_ORIGINS = "https://qr.czbd.app,http://localhost:5173,http://localhost:4173"

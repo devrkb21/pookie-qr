@@ -267,6 +267,30 @@ input[type="range"] { accent-color: var(--rose); width: 100%; }
 .up-preview { width: 44px; height: 44px; border-radius: 12px; background: var(--tint) center/cover; flex: none; display: grid; place-items: center; }
 .up-preview:empty::before { content: "♥"; color: var(--rose); }
 
+/* ---------- photo content + photo QR ---------- */
+.photo-pick {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  min-height: 170px; border-radius: 20px; border: 1.5px dashed var(--line-strong); background: var(--field);
+  cursor: pointer; overflow: hidden; font-weight: 600; color: var(--muted); transition: background 0.2s, border-color 0.2s;
+}
+.photo-pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; z-index: 2; }
+.photo-pick .pp-icon { font-size: 40px; }
+.photo-pick.has { min-height: 0; padding: 12px; flex-direction: row; justify-content: flex-start; gap: 14px; border-style: solid; }
+.photo-pick.has img { width: 84px; height: 84px; object-fit: cover; border-radius: 14px; box-shadow: 0 6px 16px -8px rgba(0,0,0,.4); }
+.photo-pick:hover, .photo-pick.drag { background: var(--tint); border-color: var(--rose); }
+.up-btn { width: 100%; min-height: 50px; }
+.up-done {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 14px; border-radius: 16px;
+  background: rgba(31, 157, 107, 0.1); border: 1px solid rgba(31, 157, 107, 0.25); color: #1f9d6b; font-size: 14px; font-weight: 600;
+}
+.up-done a { color: var(--rose); text-decoration: none; }
+.seg.kind { width: 100%; }
+.seg.kind button { flex: 1; }
+#artPanel { margin-top: 14px; }
+#artPanel .note { margin-top: 10px; line-height: 1.5; }
+.art-tile { margin-top: 0; }
+body:not(.art-on) #artPanel, body.art-on #classicPanel { display: none; }
+
 /* ---------- preview ---------- */
 .preview { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 14px; }
 @media (max-width: 900px) { .preview { position: static; } }

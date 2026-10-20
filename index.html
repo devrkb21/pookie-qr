@@ -75,9 +75,32 @@
 
         <!-- Design -->
         <div class="panel" data-panel="design">
+          <h3 data-i18n="d_kind">QR type</h3>
+          <div class="seg kind" id="kindSeg">
+            <button data-v="classic" data-i18n="kind_classic">Classic</button>
+            <button data-v="art" data-i18n="kind_art">🖼 Photo QR</button>
+          </div>
+
+          <div id="artPanel">
+            <label class="upload-tile art-tile" id="artTile">
+              <input type="file" id="artFile" accept="image/*" />
+              <span class="up-preview" id="artPreview"></span>
+              <span data-i18n="art_pick">📷 Choose a photo for the QR</span>
+            </label>
+            <h3 data-i18n="art_style">Photo style</h3>
+            <div class="seg" id="artStyleSeg">
+              <button data-v="color" data-i18n="art_color">Color</button>
+              <button data-v="mono" data-i18n="art_mono">Black &amp; white</button>
+              <button data-v="tint" data-i18n="art_tint">Tinted</button>
+            </div>
+            <label class="range"><span data-i18n="art_safety">Scan safety</span><input type="range" id="artSafety" min="0" max="1" step="0.05" /><output id="artSafetyOut"></output></label>
+            <p class="note" data-i18n="art_note"></p>
+          </div>
+
           <div class="field-head"><h3 data-i18n="d_mood">Mood</h3><button class="link-btn" id="surprise" data-i18n="surprise">✨ Surprise me</button></div>
           <div class="moods" id="moods"></div>
 
+          <div id="classicPanel">
           <h3 data-i18n="d_shape">QR shape</h3>
           <div class="seg" id="shapeSeg">
             <button data-v="square" data-i18n="shape_square">Square</button>
@@ -107,6 +130,7 @@
           </div>
           <label class="range" id="angleWrap"><span data-i18n="d_angle">Angle</span><input type="range" id="angle" min="0" max="360" step="5" /><output id="angleOut"></output></label>
           <label class="check"><input type="checkbox" id="transparent" /><span data-i18n="d_transparent">Transparent background</span></label>
+          </div>
         </div>
 
         <!-- Frame -->

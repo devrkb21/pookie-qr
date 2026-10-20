@@ -20,4 +20,8 @@ export const CONFIG = {
 
   // What the QR code holds when the app opens for the first time
   defaultMessage: "ভালোবাসি ভালোবাসা",
+
+  // Photo uploads (Cloudflare worker in /worker) and the page that shows them
+  imageApi: import.meta.env.VITE_IMAGE_API || "https://img.czbd.app",
+  photoPage: "https://qr.czbd.app/p/#",
 };

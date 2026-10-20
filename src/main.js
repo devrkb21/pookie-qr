@@ -26,6 +26,8 @@ import { t, tc, num, setLang } from "./i18n.js";
 import { TYPES, typeById } from "./qr-data.js";
 import { renderCard, ensureFonts, contrast, FRAMES, QR_BASE } from "./card.js";
 import { initScanner, decodeDrawable } from "./scanner.js";
+import { buildPhotoForm, compressPhoto } from "./photo.js";
+import { renderArtQr } from "./art.js";
 
 const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => [...root.querySelectorAll(s)];
@@ -77,6 +79,7 @@ const DEFAULT_STATE = {
   frame: "card", title: "", caption: "", font: "bangla",
   badge: "heart", badgeSize: 0.3, roundPhoto: true, photo: null,
   quality: 2,
+  art: false, artPhoto: null, artStyle: "color", artSafety: 0.5,
   lang: CONFIG.defaultLang,
 };
 
@@ -173,8 +176,23 @@ async function qrOptions(size, data, type = "canvas") {
 // The QR encoder works on bytes; send UTF-8 so Bangla and emoji survive.
 const toUtf8Bytes = (s) => (/[^\x00-\x7f]/.test(s) ? unescape(encodeURIComponent(s)) : s);
 
+let artCache = { src: "", img: null };
+async function artImage() {
+  if (artCache.src !== state.artPhoto) artCache = { src: state.artPhoto, img: await loadImage(state.artPhoto) };
+  return artCache.img;
+}
+function darken(hexColor, k) {
+  const n = parseInt(hexColor.slice(1), 16);
+  return "#" + [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.round(v * (1 - k)).toString(16).padStart(2, "0")).join("");
+}
+const artOn = () => state.art && !!state.artPhoto;
+
 // Build as SVG (fast), then rasterize once at the exact size we need.
 async function makeQr(data, size) {
+  if (artOn()) {
+    const q = new QRCodeStyling({ type: "svg", width: 64, height: 64, data: toUtf8Bytes(data), qrOptions: { errorCorrectionLevel: "H" } });
+    return renderArtQr({ qr: q._qr, photo: await artImage(), size, style: state.artStyle, safety: state.artSafety, dark: darken(state.eye, 0.55), tint: state.c1 });
+  }
   const qr = new QRCodeStyling(await qrOptions(size, toUtf8Bytes(data), "svg"));
   const blob = await qr.getRawData("svg");
   const url = URL.createObjectURL(blob);
@@ -234,6 +252,7 @@ async function render() {
   const bytes = new TextEncoder().encode(payload).length;
   $("#count").textContent = payload ? `${num(bytes)} ${t("chars")}` : "";
   ["#dlPng", "#dlJpg", "#dlSvg", "#copyBtn", "#shareBtn", "#mDl", "#mShare"].forEach((s) => ($(s).disabled = !payload));
+  if (artOn()) $("#dlSvg").disabled = true;
   scheduleCheck(qr, payload, token);
 }
 
@@ -304,6 +323,13 @@ function selectType(id) {
 function buildForm() {
   const type = typeById(state.type);
   const vals = fieldsFor(state.type);
+  if (type.custom) {
+    $("#form").replaceChildren(...buildPhotoForm(vals, {
+      update, toast, celebrate, save: saveState, rebuild: buildForm,
+      useAsArt: (src) => { Object.assign(state, { art: true, artPhoto: src }); syncControls(); $('#tabs button[data-tab="design"]').click(); update(true); },
+    }));
+    return;
+  }
   const nodes = [];
   for (const f of type.fields) {
     if (f.note) nodes.push(el("div", { className: "note", textContent: t(f.note) }));
@@ -482,6 +508,14 @@ function syncControls() {
   $("#badgeSize").value = state.badgeSize;
   $("#badgeSizeOut").textContent = num(Math.round(state.badgeSize * 100)) + "%";
   $("#roundPhoto").checked = state.roundPhoto;
+  setSeg("#kindSeg", state.art ? "art" : "classic");
+  setSeg("#artStyleSeg", state.artStyle);
+  document.body.classList.toggle("art-on", !!state.art);
+  $("#artSafety").value = state.artSafety;
+  $("#artSafetyOut").textContent = num(Math.round(state.artSafety * 100)) + "%";
+  $("#artTile").classList.toggle("on", !!state.artPhoto);
+  $("#artPreview").style.backgroundImage = state.artPhoto ? `url(${state.artPhoto})` : "";
+  $("#artPreview").textContent = state.artPhoto ? " " : "";
 }
 
 function buildAll() {
@@ -513,6 +547,32 @@ wireSeg("#shapeSeg", "shape");
 wireSeg("#gradSeg", "gradient", undefined, () => ($("#angleWrap").hidden = state.gradient !== "linear"));
 wireSeg("#fontSeg", "font");
 wireSeg("#qualitySeg", "quality", Number);
+wireSeg("#artStyleSeg", "artStyle");
+$("#kindSeg").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-v]");
+  if (!b) return;
+  state.art = b.dataset.v === "art";
+  syncControls();
+  update(true);
+});
+$("#artSafety").addEventListener("input", (e) => {
+  state.artSafety = +e.target.value;
+  $("#artSafetyOut").textContent = num(Math.round(state.artSafety * 100)) + "%";
+  update();
+});
+async function onArtPhoto(file) {
+  if (!file || !file.type.startsWith("image/")) return;
+  const { thumb } = await compressPhoto(file);
+  Object.assign(state, { art: true, artPhoto: thumb });
+  syncControls();
+  update(true);
+  toast(t("photoAdded"));
+}
+$("#artFile").addEventListener("change", (e) => { onArtPhoto(e.target.files[0]); e.target.value = ""; });
+const artTile = $("#artTile");
+["dragenter", "dragover"].forEach((ev) => artTile.addEventListener(ev, (e) => { e.preventDefault(); artTile.classList.add("drag"); }));
+["dragleave", "drop"].forEach((ev) => artTile.addEventListener(ev, () => artTile.classList.remove("drag")));
+artTile.addEventListener("drop", (e) => { e.preventDefault(); onArtPhoto(e.dataTransfer.files[0]); });
 
 ["c1", "c2", "eye", "bg"].forEach((k) => $("#" + k).addEventListener("input", (e) => {
   state[k] = e.target.value;
@@ -600,6 +660,7 @@ $("#dlJpg").addEventListener("click", (e) => busy(e.currentTarget, async () => {
   done(e.currentTarget, t("saved"));
 }));
 $("#dlSvg").addEventListener("click", (e) => busy(e.currentTarget, async () => {
+  if (artOn()) return toast(t("svgArt"));
   const qr = new QRCodeStyling(await qrOptions(1024, toUtf8Bytes(payload), "svg"));
   saveBlob(await qr.getRawData("svg"), fileName("svg"));
   done(e.currentTarget, t("saved"));

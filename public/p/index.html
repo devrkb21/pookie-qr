@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#fff1f5" />
+<meta name="robots" content="noindex" />
+<title>তোমার জন্য একটা ছবি 💌</title>
+<link rel="icon" type="image/png" href="/favicon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Da+2:wght@500;600&family=Galada&family=Tiro+Bangla&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --rose: #e8457a; --plum: #8e3b78; --ink: #43202f; --muted: #94707f;
+    --bg: #fff6f8; --a: #ffd9e5; --b: #eadfff; --c: #ffe8d9; --paper: #fffdf9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --rose: #ff6f9c; --plum: #c58bff; --ink: #fbe9f0; --muted: #c3a1b1; --bg: #1a0b15; --a: #4a1531; --b: #2b1749; --c: #3d1a1a; --paper: #fffdf9; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    min-height: 100vh; min-height: 100svh; font-family: "Baloo Da 2", system-ui, sans-serif; color: var(--ink);
+    background: var(--bg);
+    background-image: radial-gradient(60vw 50vw at 0% 0%, var(--a), transparent 60%),
+      radial-gradient(50vw 50vw at 100% 10%, var(--b), transparent 60%),
+      radial-gradient(60vw 40vw at 50% 110%, var(--c), transparent 60%);
+    background-attachment: fixed; display: grid; place-items: center; overflow-x: hidden;
+    padding: calc(24px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom));
+    -webkit-tap-highlight-color: transparent;
+  }
+  .hearts { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+  .hearts span { position: absolute; bottom: -30px; color: var(--rose); opacity: 0; animation: up linear infinite; }
+  @keyframes up { 10% { opacity: .45; } 100% { transform: translateY(-110vh) rotate(40deg); opacity: 0; } }
+
+  main { position: relative; z-index: 1; width: 100%; max-width: 440px; text-align: center; }
+  .hi { font-family: "Galada", cursive; font-size: clamp(32px, 9vw, 44px); margin: 0 0 18px; line-height: 1.3; }
+  .hi .grad { background: linear-gradient(120deg, var(--rose), var(--plum)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hi .emo { display: inline-block; animation: beat 1.5s ease-in-out infinite; }
+
+  .polaroid {
+    background: var(--paper); padding: 14px 14px 18px; border-radius: 10px; position: relative;
+    box-shadow: 0 30px 60px -24px rgba(120, 30, 70, .5), 0 0 0 1px rgba(120, 70, 90, .08);
+    transform: rotate(-1.6deg) translateY(20px) scale(.96); opacity: 0;
+    transition: transform .9s cubic-bezier(.22,1,.36,1), opacity .6s;
+  }
+  .polaroid.in { transform: rotate(-1.6deg); opacity: 1; }
+  .tape { position: absolute; top: -14px; left: 50%; width: 120px; height: 30px; transform: translateX(-50%) rotate(2deg);
+    background: rgba(232, 69, 122, .32); border-radius: 2px; }
+  .photo { width: 100%; aspect-ratio: 4 / 5; border-radius: 4px; background: #f3e6ea; overflow: hidden; display: grid; place-items: center; }
+  .photo img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .8s; }
+  .photo img.in { opacity: 1; }
+  .msg { font-family: "Galada", cursive; font-size: 26px; color: #3d2a33; margin: 14px 4px 0; line-height: 1.45; min-height: 10px; word-break: break-word; }
+  .msg:empty { display: none; }
+
+  .spinner { width: 46px; height: 46px; color: var(--rose); font-size: 40px; animation: beat 1.3s ease-in-out infinite; }
+  @keyframes beat { 0%,100% { transform: scale(1); } 20% { transform: scale(1.25); } 40% { transform: scale(1); } 60% { transform: scale(1.12); } }
+
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 28px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; border-radius: 16px; border: 0;
+    font: 600 15px "Baloo Da 2", sans-serif; text-decoration: none; cursor: pointer; transition: transform .2s; }
+  .btn:active { transform: scale(.97); }
+  .primary { color: #fff; background: linear-gradient(135deg, var(--rose), var(--plum)); box-shadow: 0 12px 26px -12px rgba(232,69,122,.6); }
+  .ghost { color: var(--ink); background: rgba(255,255,255,.7); border: 1px solid rgba(232,69,122,.2); }
+  @media (prefers-color-scheme: dark) { .ghost { background: rgba(255,255,255,.08); } }
+  .made { margin-top: 22px; font-size: 13.5px; color: var(--muted); }
+  .made a { color: var(--rose); text-decoration: none; font-weight: 600; }
+
+  .error { font-family: "Tiro Bangla", serif; font-size: 18px; color: var(--muted); padding: 40px 10px; }
+  [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { .hearts, .spinner { animation: none; } .polaroid { transition: none; } }
+</style>
+</head>
+<body>
+  <div class="hearts" id="hearts" aria-hidden="true"></div>
+  <main>
+    <h1 class="hi"><span class="grad">তোমার জন্য</span> <span class="emo">💌</span></h1>
+    <div class="polaroid" id="card">
+      <div class="tape"></div>
+      <div class="photo" id="photo"><div class="spinner" id="spin">♥</div><img id="img" alt="ভালোবাসার ছবি" /></div>
+      <p class="msg" id="msg"></p>
+    </div>
+    <p class="error" id="err" hidden>ছবিটা খুঁজে পাওয়া গেল না 🥺<br />লিংকটা আরেকবার দেখো তো।</p>
+    <div class="actions" id="actions" hidden>
+      <button class="btn primary" id="save">💾 ছবিটা রাখো</button>
+      <a class="btn ghost" href="/">✨ QR বানাও</a>
+    </div>
+    <p class="made">ভালোবাসা দিয়ে বানানো · <a href="/">লাভ QR স্টুডিও</a></p>
+  </main>
+
+<script>
+  // ?api=... lets the page be tested against a local worker
+  const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  const API = (local && new URLSearchParams(location.search).get("api")) || "https://img.czbd.app";
+  const id = (location.hash.slice(1) || new URLSearchParams(location.search).get("id") || "").trim();
+  const $ = (s) => document.getElementById(s);
+
+  // gentle floating hearts
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    for (let i = 0; i < 14; i++) {
+      const s = document.createElement("span");
+      s.textContent = ["♥", "💕", "✿"][i % 3];
+      s.style.left = Math.random() * 100 + "vw";
+      s.style.fontSize = 12 + Math.random() * 18 + "px";
+      s.style.animationDuration = 9 + Math.random() * 9 + "s";
+      s.style.animationDelay = -Math.random() * 15 + "s";
+      $("hearts").append(s);
+    }
+  }
+
+  function fail() {
+    $("card").hidden = true;
+    $("err").hidden = false;
+  }
+
+  async function load() {
+    requestAnimationFrame(() => $("card").classList.add("in"));
+    if (!/^[A-Za-z0-9]{10,32}$/.test(id)) return fail();
+    try {
+      const meta = await fetch(`${API}/meta/${id}`).then((r) => (r.ok ? r.json() : Promise.reject()));
+      $("msg").textContent = meta.msg || "";
+      const img = $("img");
+      img.onload = () => { $("spin").hidden = true; img.classList.add("in"); $("actions").hidden = false; };
+      img.onerror = fail;
+      img.src = `${API}/i/${id}`;
+    } catch {
+      fail();
+    }
+  }
+
+  $("save").addEventListener("click", async () => {
+    try {
+      const blob = await fetch(`${API}/i/${id}`).then((r) => r.blob());
+      const ext = (blob.type.split("/")[1] || "jpg").replace("jpeg", "jpg");
+      const file = new File([blob], `love-photo.${ext}`, { type: blob.type });
+      if (navigator.canShare?.({ files: [file] })) return await navigator.share({ files: [file] });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(file);
+      a.download = file.name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    } catch {}
+  });
+
+  load();
+</script>
+</body>
+</html>
